@@ -1,51 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vue Basics</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Slayer</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Your custom CSS -->
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://unpkg.com/vue@3" defer></script>
-    <script src="app.js" defer></script>
-  </head>
-  <body>
-    <header>
-      <h1>Monster Slayer</h1>
-    </header>
-    <div id="game">
-      <section id="monster" class="container">
-        <h2>Monster Health</h2>
-        <div class="healthbar">
-          <div class="healthbar__value" :style="monsterHealthBarStyle"></div>
-        </div>
-      </section>
-      <section id="player" class="container">
-        <h2>Your Health</h2>
-        <div class="healthbar">
-          <div class="healthbar__value"  :style="playerHealthBarStyle"></div>
-        </div>
-      </section>
-      <section class="container" v-if="winner">
-        <h2>Game Over</h2>
-        <h3 v-if="winner == 'monster'">You Lost!</h3>
-        <h3  v-else-if="winner == 'player'">You Won</h3>
-        <h3 v-else="winner === 'draw'">It's a Draw</h3>
-        <button @click="startGame">Start New Game </button>
-      </section>
-      <section id="controls" v-else>
-        <button @click="attackOnMonster">ATTACK</button>
-        <button :disabled="mayUseSpecialAttack" @click="specialAttackOnMonster" >SPECIAL ATTACK</button>
-        <button @click="healPlayer">HEAL</button>
-        <button @click="surrender">SURRENDER</button>
-      </section>
-      <section id="log" class="container">
-        <h2>Battle Log</h2>
-        <ul></ul>
-      </section>
+    
+</head>
+<body>
+<header class="bg-danger py-3 mb-4">
+    <div class="container text-center">
+        <h1 class="text-light">Monster Slayer <i class="fas fa-dragon"></i></h1>
     </div>
-  </body>
+</header>
+<div id="game" class="container">
+
+    <div
+        class="container">
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row justify-content-center align-items-center g-2">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="card bg-light text-dark">
+                            <div class="card-body">
+                                <h2 class="card-title">Monster Health</h2>
+                                <div class="healthbar">
+                                    <!-- <div class="healthbar__value" :style="{ width: monsterHealth + '%' }"></div> -->
+                                    <div class="healthbar__value" :style="monsterHealthBarStyle"></div>
+                                    <div class="progress-value">{{ monsterHealthShowInProgressBar }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light text-dark">
+                            <div class="card-body">
+                                <h2 class="card-title">Your Health</h2>
+                                <div class="healthbar">
+                                    <div class="healthbar__value" :style="playerHealthBarStyle"></div>
+                                    <div class="progress-value"> {{ playerHealthShowInProgressBar }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center align-items-center g-2 mt-3">
+                    <div class="col-12">
+                        <div v-if="winner" class="alert alert-dismissible alert-danger text-center">
+                            <h2>Game Over</h2>
+                            <h3 v-if="winner == 'monster'">You Lost! <i class="fas fa-skull-crossbones"></i></h3>
+                            <h3 v-else-if="winner == 'player'">You Won! <i class="fas fa-trophy"></i></h3>
+                            <h3 v-else>It's a Draw <i class="fas fa-handshake"></i></h3>
+                            <button @click="startGame" class="btn btn-primary mt-3 btn-action">Start New Game <i class="fas fa-redo-alt"></i></button>
+                        </div>
+                        <div v-else>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-center">
+
+                                    <button @click="attackOnMonster" class="btn btn-danger btn-action w-50"><i class="fas fa-fist-raised"></i> ATTACK</button>
+                                    <button :disabled="mayUseSpecialAttack" @click="specialAttackOnMonster" class="btn btn-warning btn-action w-50"><i class="fas fa-bolt"></i> SPECIAL ATTACK</button>
+                                </div>
+                                <div class="d-flex justify-content-center">
+
+                                    <button @click="healPlayer" class="btn btn-success btn-action  w-50"><i class="fas fa-heart"></i> HEAL</button>
+                                    <button @click="surrender" class="btn btn-secondary btn-action w-50"><i class="fas fa-flag"></i> SURRENDER</button>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h2 class="card-title">Battle Log</h2>
+                                    <ul class="list-unstyled">
+                                        <li v-for="logMessage in logMessages" :key="logMessage.id">
+                                            <span :class="{'log--player': logMessage.actionBy === 'player', 'log--monster': logMessage.actionBy === 'monster'}"> 
+                                                {{ logMessage.actionBy === 'player' ? 'Player' : 'Monster' }}
+                                            </span>
+                                            <span v-if="logMessage.actionType === 'heal'"> heals for <span class="log--heal">{{ logMessage.actionValue }}</span></span>
+                                            <span v-else> attacks and deals <span class="log--damage">{{ logMessage.actionValue }}</span> damage</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Font Awesome Icons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+<!-- Vue.js -->
+<script src="https://unpkg.com/vue@3"></script>
+<!-- Your custom JavaScript -->
+<script src="app.js"></script>
+</body>
 </html>
